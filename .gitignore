@@ -1,0 +1,8 @@
+*.c
+*.so
+*.pyd
+*.dylib
+build/
+dist/
+*.egg-info
+virtualenv

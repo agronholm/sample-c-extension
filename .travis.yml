@@ -1,0 +1,32 @@
+language: python
+
+jobs:
+  include:
+    # Clean up any remnants of previous builds
+    - stage: clean up
+      install: skip
+      script: aws s3 rm --recursive s3://sample-c-extension/dist
+
+    - stage: package
+      python: "3.5"
+      install: pip install Cython
+      script:
+        - python setup.py sdist
+        - aws s3 sync dist s3://sample-c-extension/dist
+
+    - stage: package
+      sudo: required
+      install: skip
+      script:
+        - docker run --rm -it -v $(pwd):/io -w /io quay.io/pypa/manylinux1_x86_64 .travis/build_linux_wheels.sh
+        - aws s3 sync dist s3://sample-c-extension/dist
+
+    - stage: deploy to PyPI
+      install: pip install twine
+      script:
+        - aws s3 sync s3://sample-c-extension/dist dist
+        - twine upload -r https://test.pypi.org/legacy dist/*
+
+before_install:
+  - pip install awscli
+  - mkdir dist

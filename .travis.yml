@@ -15,7 +15,7 @@ jobs:
       install: skip
       script:
         - docker run --rm -it -v $(pwd):/io -w /io quay.io/pypa/manylinux1_x86_64 .travis/build_linux_wheels.sh
-        - aws s3 sync dist s3://sample-c-extension/dist
+        - aws s3 sync wheelhouse s3://sample-c-extension/dist
 
     - stage: deploy to PyPI
       install: pip install twine

@@ -12,23 +12,30 @@ jobs:
   - stage: package sdist
     python: '3.5'
     install: pip install Cython
-    script:
-    - python setup.py sdist
+    script: python setup.py sdist
+    after_success:
     - aws s3 rm --recursive s3://sample-c-extension/dist
     - aws s3 sync dist s3://sample-c-extension/dist
 
+  # Linux
   - stage: package wheels
     sudo: required
     install: skip
-    script:
-    - docker run --rm -it -v $(pwd):/io -w /io quay.io/pypa/manylinux1_x86_64 .ci/build_linux_wheels.sh
-    - aws s3 sync wheelhouse s3://sample-c-extension/dist
+    script: docker run --rm -it -v $(pwd):/io -w /io quay.io/pypa/manylinux1_x86_64 .ci/build_linux_wheels.sh
+    after_success: aws s3 sync wheelhouse s3://sample-c-extension/dist
 
+  # macOS
+  - stage: package wheels
+    os: osx
+    language: generic
+    script: .ci/build_macos_wheels.sh
+    after_success: aws s3 sync dist s3://sample-c-extension/dist
+
+  # Windows
   - stage: package wheels
     install: pip install requests
-    script:
-    - .ci/build_windows_wheels.py
-    - aws s3 sync wheelhouse s3://sample-c-extension/dist
+    script: .ci/build_windows_wheels.py
+    after_success: aws s3 sync wheelhouse s3://sample-c-extension/dist
 
   - stage: deploy to PyPI
     install: pip install twine

@@ -28,7 +28,9 @@ jobs:
   - &test
     stage: test
     python: '2.7'
-    install: pip install -e .[test]
+    install:
+    - pip install Cython
+    - pip install -e .[test]
     script: pytest
 
   - <<: *test

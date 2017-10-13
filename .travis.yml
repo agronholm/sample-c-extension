@@ -22,28 +22,22 @@ stages:
   - name: deploy to pypi
     if: type = push AND tag ~= ^v\d+\.\d+\.\d+
 
+python:
+  - '2.7'
+  - '3.4'
+  - '3.5'
+  - '3.6'
+
+install:
+- pip install Cython
+- pip install -e .[test]
+
+script: pytest
+
 jobs:
   fast_finish: true
   include:
-  - &test
-    stage: test
-    python: '2.7'
-    install:
-    - pip install Cython
-    - pip install -e .[test]
-    script: pytest
-
-  - <<: *test
-    python: '3.4'
-
-  - <<: *test
-    python: '3.5'
-
-  - <<: *test
-    python: '3.6'
-
   - stage: build sdist
-    python: '3.5'
     before_install: &setup_s3
     - pip install awscli
     - mkdir dist
@@ -66,6 +60,7 @@ jobs:
     language: generic
     env: OS=MACOS
     before_install: *setup_s3
+    install: skip
     script: .ci/build_macos_wheels.sh
     after_success: aws s3 sync dist s3://sample-c-extension/dist
 

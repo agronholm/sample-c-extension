@@ -53,7 +53,6 @@ jobs:
     - aws s3 rm --recursive s3://sample-c-extension/dist
     - aws s3 sync dist s3://sample-c-extension/dist
 
-  # Linux
   - stage: build wheels
     env: OS=LINUX
     sudo: required
@@ -62,7 +61,6 @@ jobs:
     script: docker run --rm -it -v $(pwd):/io -w /io quay.io/pypa/manylinux1_x86_64 .ci/build_linux_wheels.sh
     after_success: aws s3 sync wheelhouse s3://sample-c-extension/dist
 
-  # macOS
   - stage: build wheels
     os: osx
     language: generic
@@ -71,7 +69,6 @@ jobs:
     script: .ci/build_macos_wheels.sh
     after_success: aws s3 sync dist s3://sample-c-extension/dist
 
-  # Windows
   - stage: build wheels
     env: OS=WINDOWS
     before_install: *setup_s3

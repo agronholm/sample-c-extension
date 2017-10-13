@@ -7,7 +7,20 @@ env:
   # APPVEYOR_TOKEN
   - secure: kJ45l4UxhT1wgR+SHvAK/XfbJgo3ZI+0GCwFLaLjo/z6WQ5B7KAcT6ZYvpguiVYSfdWNtVTM2JMd1bSQs+ffqouOkrSYn0nWfOV/HP1Ip922/KW8bXDCDegspmzEM3GaJEKq4GUmnpTr/Ht6BP/4L3gpDKW7f5mxAKCaKAWr4MqMTH/rQKXxWUgXwjEHqhfbe/V5pLSVLFH8DjJGQoqkcQcOpAvzzJz2r6vPqdBzvNxP3v7mzysguGy21Wp7q7QSzzCKol+1eVGQ6zdAA93Msk8KWsNPG7QsiXyRO/bAiJslm3XIqykOt0XXnrM0xvpzLY7R22T75NnuH7/M2l4QgphT+DyH1FYnJDWMPV7bQG9GCNT+2AAUgojHJaxL9jFNho+2iTUrz6OX5ZTZrrT7a/PkJ/yhTR/IqKW9k10HVIHMLxjIOiEHzO6qwLY4gIYkhqqMJ+NOvO7tIVNlZnYHqs58ml461d1hNDAihPqDz0ZWwS35cNtvRX1l2Atog2sbNOsEb5Ckl4+jcFlioUnfBURZHThdNzn+GTWNy9jS017zc1C4XU/yVxsnZXIlwMTWBL+66m6RAsTMYTopb4AP9RGZKXMAJGUVOJhC54k8v2lGyJkK7cKuJUJsjJV4kr6DxKq4QN5VzAymNJjDzC+iBZFn3le8LTLiKKlpBXXOSKo=
 
+stages:
+  - name: package sdist
+    if: type = push AND tag ~= ^v\d+\.\d+\.\d+
+  - name: package wheel
+    if: type = push AND tag ~= ^v\d+\.\d+\.\d+
+  - name: deploy to pypi
+    if: type = push AND tag ~= ^v\d+\.\d+\.\d+
+
+before_install:
+- pip install awscli
+- mkdir dist
+
 jobs:
+  fast_finish: true
   include:
   - stage: package sdist
     python: '3.5'
@@ -19,6 +32,7 @@ jobs:
 
   # Linux
   - stage: package wheels
+    env: OS=LINUX
     sudo: required
     install: skip
     script: docker run --rm -it -v $(pwd):/io -w /io quay.io/pypa/manylinux1_x86_64 .ci/build_linux_wheels.sh
@@ -28,21 +42,19 @@ jobs:
   - stage: package wheels
     os: osx
     language: generic
+    env: OS=MACOS
     script: .ci/build_macos_wheels.sh
     after_success: aws s3 sync dist s3://sample-c-extension/dist
 
   # Windows
   - stage: package wheels
+    env: OS=WINDOWS
     install: pip install requests
     script: .ci/build_windows_wheels.py
     after_success: aws s3 sync wheelhouse s3://sample-c-extension/dist
 
-  - stage: deploy to PyPI
+  - stage: deploy to pypi
     install: pip install twine
     script:
     - aws s3 sync s3://sample-c-extension/dist dist
     - twine upload --repository-url https://test.pypi.org/legacy/ dist/*
-
-before_install:
-- pip install awscli
-- mkdir dist

@@ -15,9 +15,9 @@ env:
 
 stages:
   - name: test
-  - name: package sdist
+  - name: build sdist
     if: type = push AND tag ~= ^v\d+\.\d+\.\d+
-  - name: package wheel
+  - name: build wheel
     if: type = push AND tag ~= ^v\d+\.\d+\.\d+
   - name: deploy to pypi
     if: type = push AND tag ~= ^v\d+\.\d+\.\d+
@@ -42,7 +42,7 @@ jobs:
   - <<: *test
     python: '3.6'
 
-  - stage: package sdist
+  - stage: build sdist
     python: '3.5'
     before_install: &setup_s3
     - pip install awscli
@@ -54,7 +54,7 @@ jobs:
     - aws s3 sync dist s3://sample-c-extension/dist
 
   # Linux
-  - stage: package wheels
+  - stage: build wheels
     env: OS=LINUX
     sudo: required
     before_install: *setup_s3
@@ -63,7 +63,7 @@ jobs:
     after_success: aws s3 sync wheelhouse s3://sample-c-extension/dist
 
   # macOS
-  - stage: package wheels
+  - stage: build wheels
     os: osx
     language: generic
     env: OS=MACOS
@@ -72,7 +72,7 @@ jobs:
     after_success: aws s3 sync dist s3://sample-c-extension/dist
 
   # Windows
-  - stage: package wheels
+  - stage: build wheels
     env: OS=WINDOWS
     before_install: *setup_s3
     install: pip install requests

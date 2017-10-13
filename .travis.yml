@@ -15,15 +15,28 @@ stages:
   - name: deploy to pypi
     if: type = push AND tag ~= ^v\d+\.\d+\.\d+
 
-before_install:
-- pip install awscli
-- mkdir dist
-
 jobs:
   fast_finish: true
   include:
+  - &test
+    python: '2.7'
+    install: pip install -e .[test]
+    script: pytest
+
+  - python: '3.4'
+    <<: *test
+
+  - python: '3.5'
+    <<: *test
+
+  - python: '3.6'
+    <<: *test
+
   - stage: package sdist
     python: '3.5'
+    before_install: &setup_s3
+    - pip install awscli
+    - mkdir dist
     install: pip install Cython
     script: python setup.py sdist
     after_success:
@@ -34,6 +47,7 @@ jobs:
   - stage: package wheels
     env: OS=LINUX
     sudo: required
+    before_install: *setup_s3
     install: skip
     script: docker run --rm -it -v $(pwd):/io -w /io quay.io/pypa/manylinux1_x86_64 .ci/build_linux_wheels.sh
     after_success: aws s3 sync wheelhouse s3://sample-c-extension/dist
@@ -43,18 +57,22 @@ jobs:
     os: osx
     language: generic
     env: OS=MACOS
+    before_install: *setup_s3
     script: .ci/build_macos_wheels.sh
     after_success: aws s3 sync dist s3://sample-c-extension/dist
 
   # Windows
   - stage: package wheels
     env: OS=WINDOWS
+    before_install: *setup_s3
     install: pip install requests
     script: .ci/build_windows_wheels.py
     after_success: aws s3 sync wheelhouse s3://sample-c-extension/dist
 
   - stage: deploy to pypi
+    before_install: *setup_s3
     install: pip install twine
     script:
     - aws s3 sync s3://sample-c-extension/dist dist
     - twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+    - aws s3 rm --recursive s3://sample-c-extension/dist

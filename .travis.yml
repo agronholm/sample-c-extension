@@ -31,14 +31,14 @@ jobs:
     install: pip install -e .[test]
     script: pytest
 
-  - python: '3.4'
-    <<: *test
+  - <<: *test
+    python: '3.4'
 
-  - python: '3.5'
-    <<: *test
+  - <<: *test
+    python: '3.5'
 
-  - python: '3.6'
-    <<: *test
+  - <<: *test
+    python: '3.6'
 
   - stage: package sdist
     python: '3.5'

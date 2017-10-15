@@ -18,7 +18,7 @@ stages:
   - name: test
   - name: build sdist
     if: type = push AND tag ~= ^v\d+\.\d+\.\d+
-  - name: build wheel
+  - name: build wheels
     if: type = push AND tag ~= ^v\d+\.\d+\.\d+
   - name: deploy to pypi
     if: type = push AND tag ~= ^v\d+\.\d+\.\d+

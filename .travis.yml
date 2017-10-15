@@ -2,6 +2,7 @@ language: python
 
 env:
   global:
+  - PYTHONUNBUFFERED=1
   - APPVEYOR_SLUG=sample-c-extension
   - APPVEYOR_ACCOUNT=agronholm
   # APPVEYOR_TOKEN

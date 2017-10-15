@@ -17,11 +17,11 @@ env:
 stages:
   - name: test
   - name: build sdist
-    if: type = push AND tag ~= ^v\d+\.\d+\.\d+
+    if: type = push AND tag =~ ^v\d+\.\d+\.\d+
   - name: build wheels
-    if: type = push AND tag ~= ^v\d+\.\d+\.\d+
+    if: type = push AND tag =~ ^v\d+\.\d+\.\d+
   - name: deploy to pypi
-    if: type = push AND tag ~= ^v\d+\.\d+\.\d+
+    if: type = push AND tag =~ ^v\d+\.\d+\.\d+
 
 python:
   - '2.7'

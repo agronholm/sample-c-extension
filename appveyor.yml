@@ -1,3 +1,4 @@
+# Adapted from https://packaging.python.org/guides/supporting-windows-using-appveyor/
 version: 1.0.{build}
 clone_depth: 50  # The same depth Travis has
 

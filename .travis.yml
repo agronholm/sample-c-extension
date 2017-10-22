@@ -1,5 +1,3 @@
-language: python
-
 env:
   global:
   - PYTHONUNBUFFERED=1
@@ -16,32 +14,35 @@ env:
 
 stages:
   - name: test
+    language: python
+    python:
+    - '2.7'
+    - '3.4'
+    - '3.5'
+    - '3.6'
+    before_install: skip
+    install:
+    - pip install Cython
+    - pip install -e .[test]
+    script: pytest
+
   - name: build sdist
     if: type = push AND tag =~ ^v\d+\.\d+\.\d+
+
   - name: build wheels
     if: type = push AND tag =~ ^v\d+\.\d+\.\d+
+
   - name: deploy to pypi
     if: type = push AND tag =~ ^v\d+\.\d+\.\d+
 
-python:
-  - '2.7'
-  - '3.4'
-  - '3.5'
-  - '3.6'
-
-install:
-- pip install Cython
-- pip install -e .[test]
-
-script: pytest
+before_install:
+- pip install awscli
+- mkdir dist
 
 jobs:
   fast_finish: true
   include:
   - stage: build sdist
-    before_install: &setup_s3
-    - pip install awscli
-    - mkdir dist
     install: pip install Cython
     script: python setup.py sdist
     after_success:
@@ -51,29 +52,22 @@ jobs:
   - stage: build wheels
     env: OS=LINUX
     sudo: required
-    before_install: *setup_s3
-    install: skip
     script: docker run --rm -it -v $(pwd):/io -w /io quay.io/pypa/manylinux1_x86_64 .ci/build_linux_wheels.sh
     after_success: aws s3 sync wheelhouse s3://sample-c-extension/dist
 
   - stage: build wheels
     os: osx
-    language: generic
     env: OS=MACOS
-    before_install: *setup_s3
-    install: skip
     script: .ci/build_macos_wheels.sh
     after_success: aws s3 sync dist s3://sample-c-extension/dist
 
   - stage: build wheels
     env: OS=WINDOWS
-    before_install: *setup_s3
     install: pip install requests
     script: .ci/build_windows_wheels.py
     after_success: aws s3 sync wheelhouse s3://sample-c-extension/dist
 
   - stage: deploy to pypi
-    before_install: *setup_s3
     install: pip install twine
     script:
     - aws s3 sync s3://sample-c-extension/dist dist
